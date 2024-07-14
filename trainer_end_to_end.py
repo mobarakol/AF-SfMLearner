@@ -349,7 +349,7 @@ class Trainer:
                         outputs[("position", scale, f_i)] = outputs_0[("position", scale)]
                         outputs[("position", "high", scale, f_i)] = F.interpolate(
                             outputs[("position", scale, f_i)], [self.opt.height, self.opt.width], mode="bilinear",
-                            align_corners=False)
+                            align_corners=True)
                         outputs[("registration", scale, f_i)] = self.spatial_transform(inputs[("color", f_i, 0)],
                                                                                        outputs[(
                                                                                        "position", "high", scale, f_i)])
@@ -357,7 +357,7 @@ class Trainer:
                         outputs[("position_reverse", scale, f_i)] = outputs_1[("position", scale)]
                         outputs[("position_reverse", "high", scale, f_i)] = F.interpolate(
                             outputs[("position_reverse", scale, f_i)], [self.opt.height, self.opt.width],
-                            mode="bilinear", align_corners=False)
+                            mode="bilinear", align_corners=True)
                         outputs[("occu_mask_backward", scale, f_i)], _ = self.get_occu_mask_backward(
                             outputs[("position_reverse", "high", scale, f_i)])
                         outputs[("occu_map_bidirection", scale, f_i)] = self.get_occu_mask_bidirection(
@@ -373,7 +373,7 @@ class Trainer:
                         outputs[("transform", scale, f_i)] = outputs_2[("transform", scale)]
                         outputs[("transform", "high", scale, f_i)] = F.interpolate(
                             outputs[("transform", scale, f_i)], [self.opt.height, self.opt.width], mode="bilinear",
-                            align_corners=False)
+                            align_corners=True)
                         outputs[("refined", scale, f_i)] = (outputs[("transform", "high", scale, f_i)] * outputs[
                             ("occu_mask_backward", 0, f_i)].detach() + inputs[("color", 0, 0)])
                         outputs[("refined", scale, f_i)] = torch.clamp(outputs[("refined", scale, f_i)], min=0.0,
@@ -475,12 +475,12 @@ class Trainer:
 
                         outputs[("position", scale, f_i)] = outputs_0[("position", scale)]
                         outputs[("position", "high", scale, f_i)] = F.interpolate(
-                            outputs[("position", scale, f_i)], [self.opt.height, self.opt.width], mode="bilinear", align_corners=False)
+                            outputs[("position", scale, f_i)], [self.opt.height, self.opt.width], mode="bilinear", align_corners=True)
                         outputs[("registration", scale, f_i)] = self.spatial_transform(inputs[("color", f_i, 0)], outputs[("position", "high", scale, f_i)])
                     
                         outputs[("position_reverse", scale, f_i)] = outputs_1[("position", scale)]
                         outputs[("position_reverse", "high", scale, f_i)] = F.interpolate(
-                            outputs[("position_reverse", scale, f_i)], [self.opt.height, self.opt.width], mode="bilinear", align_corners=False)
+                            outputs[("position_reverse", scale, f_i)], [self.opt.height, self.opt.width], mode="bilinear", align_corners=True)
                         outputs[("occu_mask_backward", scale, f_i)],  outputs[("occu_map_backward", scale, f_i)]= self.get_occu_mask_backward(outputs[("position_reverse", "high", scale, f_i)])
                         outputs[("occu_map_bidirection", scale, f_i)] = self.get_occu_mask_bidirection(outputs[("position", "high", scale, f_i)],
                                                                                                           outputs[("position_reverse", "high", scale, f_i)])
@@ -494,7 +494,7 @@ class Trainer:
 
                         outputs[("transform", scale, f_i)] = outputs_2[("transform", scale)]
                         outputs[("transform", "high", scale, f_i)] = F.interpolate(
-                            outputs[("transform", scale, f_i)], [self.opt.height, self.opt.width], mode="bilinear", align_corners=False)
+                            outputs[("transform", scale, f_i)], [self.opt.height, self.opt.width], mode="bilinear", align_corners=True)
                         outputs[("refined", scale, f_i)] = (outputs[("transform", "high", scale, f_i)] * outputs[("occu_mask_backward", 0, f_i)].detach()  + inputs[("color", 0, 0)])
                         outputs[("refined", scale, f_i)] = torch.clamp(outputs[("refined", scale, f_i)], min=0.0, max=1.0)
                         # outputs[("grad_refined", scale, f_i)] = get_gradmap(outputs[("refined", scale, f_i)])
@@ -522,7 +522,7 @@ class Trainer:
                 source_scale = scale
             else:
                 disp = F.interpolate(
-                    disp, [self.opt.height, self.opt.width], mode="bilinear", align_corners=False)
+                    disp, [self.opt.height, self.opt.width], mode="bilinear", align_corners=True)
 
             _, depth = disp_to_depth(disp, self.opt.min_depth, self.opt.max_depth)
 
@@ -558,7 +558,8 @@ class Trainer:
                 outputs[("color", frame_id, scale)] = F.grid_sample(
                     inputs[("color", frame_id, source_scale)],
                     outputs[("sample", frame_id, scale)],
-                    padding_mode="border")
+                    padding_mode="border",
+                    align_corners=True)
 
                 outputs[("position_depth", scale, frame_id)] = self.position_depth[source_scale](
                         cam_points, inputs[("K", source_scale)], T)

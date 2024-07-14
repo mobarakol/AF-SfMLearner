@@ -12,6 +12,8 @@ from utils import readlines
 from options import MonodepthOptions
 import datasets
 import networks
+import warnings
+warnings.filterwarnings('ignore')
 
 cv2.setNumThreads(0)  # This speeds up evaluation 5x on our unix systems (OpenCV 3.3.1)
 

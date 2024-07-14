@@ -220,6 +220,13 @@ class MonodepthOptions:
                                  help="if set will perform the flipping post processing "
                                       "from the original monodepth paper",
                                  action="store_true")
+        self.parser.add_argument("--visualize_depth",
+                                 help="if set saves visualized depth map",
+                                 action="store_true")
+        self.parser.add_argument("--save_recon",
+                                 help="if set saves reconstruction files",
+                                 action="store_true")
+        
 
     def parse(self):
         self.options = self.parser.parse_args()

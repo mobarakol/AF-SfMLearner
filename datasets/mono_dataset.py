@@ -50,7 +50,8 @@ class MonoDataset(data.Dataset):
         self.height = height
         self.width = width
         self.num_scales = num_scales
-        self.interp = Image.ANTIALIAS
+        # self.interp = Image.ANTIALIAS
+        self.interp = Image.LANCZOS
 
         self.frame_idxs = frame_idxs
 
@@ -67,8 +68,7 @@ class MonoDataset(data.Dataset):
             self.contrast = (0.8, 1.2)
             self.saturation = (0.8, 1.2)
             self.hue = (-0.1, 0.1)
-            transforms.ColorJitter.get_params(
-                self.brightness, self.contrast, self.saturation, self.hue)
+            transforms.transforms.ColorJitter(self.brightness,self.contrast,self.saturation,self.hue)
         except TypeError:
             self.brightness = 0.2
             self.contrast = 0.2
@@ -137,6 +137,10 @@ class MonoDataset(data.Dataset):
 
         line = self.filenames[index].split()
         folder = line[0]
+        sequence = folder[7]
+        keyframe = folder[-1]
+        inputs["sequence"] = torch.from_numpy(np.array(int(sequence)))
+        inputs["keyframe"] = torch.from_numpy(np.array(int(keyframe)))
 
         if len(line) == 3:
             frame_index = int(line[1])
@@ -147,7 +151,8 @@ class MonoDataset(data.Dataset):
             side = line[2]
         else:
             side = None
-
+            
+        inputs["frame_id"] = torch.from_numpy(np.array(frame_index))
         for i in self.frame_idxs:
             if i == "s":
                 other_side = {"r": "l", "l": "r"}[side]
@@ -168,8 +173,7 @@ class MonoDataset(data.Dataset):
             inputs[("inv_K", scale)] = torch.from_numpy(inv_K)
 
         if do_color_aug:
-            color_aug = transforms.ColorJitter.get_params(
-                self.brightness, self.contrast, self.saturation, self.hue)
+            color_aug = transforms.ColorJitter(self.brightness, self.contrast, self.saturation, self.hue)
         else:
             color_aug = (lambda x: x)
 
