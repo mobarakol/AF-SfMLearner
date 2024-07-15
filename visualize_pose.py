@@ -62,8 +62,9 @@ ax.set_ylabel("y [mm]")
 ax.set_zlabel("z [mm]")
 
 # draw the figure, the color is r = read
-figure1, = ax.plot(points_gt[:, 0, 0], points_gt[:, 1, 0], points_gt[:, 2, 0], c='b', linewidth=1.6)
-figure2, = ax.plot(points_our[:, 0, 0], points_our[:, 1, 0], points_our[:, 2, 0], c='g', linewidth=1.6)
+figure1, = ax.plot(points_gt[:, 0, 0], points_gt[:, 1, 0], points_gt[:, 2, 0], label = 'GT', linestyle = '-', c='b', linewidth=1.6)
+figure2, = ax.plot(points_our[:, 0, 0], points_our[:, 1, 0], points_our[:, 2, 0], label = 'Prediction', linestyle = '-', c='g', linewidth=1.6)
 
+plt.legend()
 plt.savefig('trajectory_pose_seq{}.png'.format(opt.scared_pose_seq),dpi=600)
 plt.show()
