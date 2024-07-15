@@ -226,6 +226,10 @@ class MonodepthOptions:
         self.parser.add_argument("--save_recon",
                                  help="if set saves reconstruction files",
                                  action="store_true")
+        self.parser.add_argument("--scared_pose_seq",
+                                 type=str,
+                                 help="pose sequence in scared",
+                                 default=1)
         
 
     def parse(self):
