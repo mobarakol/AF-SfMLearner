@@ -79,7 +79,7 @@ def evaluate(opt):
 
     filenames = readlines(
         os.path.join(os.path.dirname(__file__), "splits", "endovis",
-                     "test_files_sequence2.txt"))
+                     "test_files_sequence{}.txt".format(opt.scared_pose_seq)))
 
     dataset = SCAREDRAWDataset(opt.data_path, filenames, opt.height, opt.width,
                                [0, 1], 4, is_train=False)
@@ -121,9 +121,9 @@ def evaluate(opt):
 
     pred_poses = np.concatenate(pred_poses)
     # np.savez_compressed(os.path.join(os.path.dirname(__file__), "splits", "endovis", "curve", "pose_our.npz"), data=np.array(pred_poses))
-    np.savez_compressed(os.path.join(os.path.dirname(__file__), "splits", "endovis", "pred_pose_sq2.npz"), data=np.array(pred_poses))
+    np.savez_compressed(os.path.join(os.path.dirname(__file__), "splits", "endovis", "pred_pose_sq{}.npz".format(opt.scared_pose_seq)), data=np.array(pred_poses))
 
-    gt_path = os.path.join(os.path.dirname(__file__), "splits", "endovis", "gt_poses_sq2.npz")
+    gt_path = os.path.join(os.path.dirname(__file__), "splits", "endovis", "gt_poses_sq{}.npz".format(opt.scared_pose_seq))
     gt_local_poses = np.load(gt_path, fix_imports=True, encoding='latin1')["data"]
 
     ates = []
