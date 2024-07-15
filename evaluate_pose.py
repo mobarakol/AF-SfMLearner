@@ -12,6 +12,7 @@ from options import MonodepthOptions
 from datasets import SCAREDRAWDataset
 import warnings
 warnings.filterwarnings('ignore')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 # from https://github.com/tinghuiz/SfMLearner
@@ -89,14 +90,14 @@ def evaluate(opt):
     pose_decoder_path = os.path.join(opt.load_weights_folder, "pose.pth")
 
     pose_encoder = networks.ResnetEncoder(opt.num_layers, False, 2)
-    pose_encoder.load_state_dict(torch.load(pose_encoder_path))
+    pose_encoder.load_state_dict(torch.load(pose_encoder_path, map_location=device.type))
 
     pose_decoder = networks.PoseDecoder(pose_encoder.num_ch_enc, 1, 2)
-    pose_decoder.load_state_dict(torch.load(pose_decoder_path))
+    pose_decoder.load_state_dict(torch.load(pose_decoder_path, map_location=device.type))
 
-    pose_encoder.cuda()
+    pose_encoder.to(device)
     pose_encoder.eval()
-    pose_decoder.cuda()
+    pose_decoder.to(device)
     pose_decoder.eval()
 
     pred_poses = []
@@ -108,7 +109,7 @@ def evaluate(opt):
     with torch.no_grad():
         for inputs in dataloader:
             for key, ipt in inputs.items():
-                inputs[key] = ipt.cuda()
+                inputs[key] = ipt.to(device)
 
             all_color_aug = torch.cat([inputs[("color", 1, 0)], inputs[("color", 0, 0)]], 1)
 
