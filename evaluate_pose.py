@@ -120,7 +120,7 @@ def evaluate(opt):
                 transformation_from_parameters(axisangle[:, 0], translation[:, 0]).cpu().numpy())
 
     pred_poses = np.concatenate(pred_poses)
-    np.savez_compressed(os.path.join(os.path.dirname(__file__), "splits", "endovis", "curve", "pose_our.npz"), data=np.array(pred_poses))
+    # np.savez_compressed(os.path.join(os.path.dirname(__file__), "splits", "endovis", "curve", "pose_our.npz"), data=np.array(pred_poses))
     np.savez_compressed(os.path.join(os.path.dirname(__file__), "splits", "endovis", "pred_pose_sq1.npz"), data=np.array(pred_poses))
 
     gt_path = os.path.join(os.path.dirname(__file__), "splits", "endovis", "gt_poses_sq2.npz")
