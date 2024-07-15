@@ -3,13 +3,14 @@ from mpl_toolkits.mplot3d import axes3d
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-
+from options import MonodepthOptions
+opt = MonodepthOptions().parse()
 # load data from file
 # you replace this using with open
-gt_path = os.path.join(os.path.dirname(__file__), "splits", "endovis", "curve", "gt_poses.npz")
+gt_path = os.path.join(os.path.dirname(__file__), "splits", "endovis", "gt_poses_sq{}.npz".format(opt.scared_pose_seq))
 gt_local_poses = np.load(gt_path, fix_imports=True, encoding='latin1')["data"]
 
-our_path = os.path.join(os.path.dirname(__file__), "splits", "endovis", "curve", "pose_our.npz")
+our_path = os.path.join(os.path.dirname(__file__), "splits", "endovis", "pred_pose_sq{}.npz".format(opt.scared_pose_seq))
 our_local_poses = np.load(our_path, fix_imports=True, encoding='latin1')["data"]
 
 
@@ -52,7 +53,7 @@ points_gt = np.array(points_gt)
 
 # new a figure and set it into 3d
 fig = plt.figure()
-ax = fig.gca(projection='3d')
+ax = fig.add_subplot(projection='3d')
 
 # set figure information
 # ax.set_title("3D_Curve")
@@ -64,5 +65,5 @@ ax.set_zlabel("z [mm]")
 figure1, = ax.plot(points_gt[:, 0, 0], points_gt[:, 1, 0], points_gt[:, 2, 0], c='b', linewidth=1.6)
 figure2, = ax.plot(points_our[:, 0, 0], points_our[:, 1, 0], points_our[:, 2, 0], c='g', linewidth=1.6)
 
-plt.savefig('vo.png',dpi=600)
+plt.savefig('trajectory_pose_seq{}.png'.format(opt.scared_pose_seq),dpi=600)
 plt.show()
