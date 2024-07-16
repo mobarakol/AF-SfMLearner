@@ -13,6 +13,7 @@ from options import MonodepthOptions
 import datasets
 import networks
 import warnings
+import torch.nn as nn
 from transformers import AutoImageProcessor, AutoModelForDepthEstimation, DepthAnythingForDepthEstimation
 
 def disp_to_depth(disp, min_depth, max_depth):
@@ -143,6 +144,7 @@ def evaluate(opt):
                 #output = depth_decoder(encoder(input_color))
                 output = depth_model(input_color)
                 output = output.predicted_depth.unsqueeze(1)
+                output = nn.Sigmoid()(output)
                 # pred_disp, _ = disp_to_depth(output[("disp", 0)], opt.min_depth, opt.max_depth)
                 pred_disp, _ = disp_to_depth(output, opt.min_depth, opt.max_depth)
                 pred_disp = pred_disp.cpu()[:, 0].numpy()
