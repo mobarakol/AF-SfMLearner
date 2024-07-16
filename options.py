@@ -230,6 +230,9 @@ class MonodepthOptions:
                                  type=str,
                                  help="pose sequence in scared",
                                  default=1)
+        self.parser.add_argument("--zero_shot",
+                                 help="if set saves reconstruction files",
+                                 action="store_true")
         
 
     def parse(self):
