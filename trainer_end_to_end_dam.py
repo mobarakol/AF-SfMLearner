@@ -4,6 +4,7 @@ import time
 import json
 import datasets
 import networks
+from networks import Customised_DAM
 import numpy as np
 import torch.optim as optim
 import torch.nn as nn
@@ -12,6 +13,7 @@ from utils import *
 from layers import *
 from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
+from torchmetrics.image import MultiScaleStructuralSimilarityIndexMeasure
 
 
 class Trainer:
@@ -23,8 +25,8 @@ class Trainer:
         assert self.opt.height % 32 == 0, "'height' must be a multiple of 32"
         assert self.opt.width % 32 == 0, "'width' must be a multiple of 32"
 
-        self.models = {}  # 字典
-        self.parameters_to_train = []  # 列表
+        self.models = {}  
+        self.parameters_to_train = []  
         self.parameters_to_train_0 = []
 
         self.device = torch.device("cpu" if self.opt.no_cuda else "cuda")
@@ -40,15 +42,10 @@ class Trainer:
         if self.opt.use_stereo:
             self.opt.frame_ids.append("s")
 
-        self.models["encoder"] = networks.ResnetEncoder(
-            self.opt.num_layers, self.opt.weights_init == "pretrained")  # 18
-        self.models["encoder"].to(self.device)
-        self.parameters_to_train += list(self.models["encoder"].parameters())
-
-        self.models["depth"] = networks.DepthDecoder(
-            self.models["encoder"].num_ch_enc, self.opt.scales)
-        self.models["depth"].to(self.device)
-        self.parameters_to_train += list(self.models["depth"].parameters())
+        self.models["depth_model"] = Customised_DAM()
+        
+        self.models["depth_model"].to(self.device)
+        self.parameters_to_train += list(filter(lambda p: p.requires_grad, self.models["depth_model"].parameters()))
 
         self.models["position_encoder"] = networks.ResnetEncoder(
             self.opt.num_layers, self.opt.weights_init == "pretrained", num_input_images=2)  # 18
@@ -199,9 +196,7 @@ class Trainer:
         for param in self.models["position"].parameters():
             param.requires_grad = True
 
-        for param in self.models["encoder"].parameters():
-            param.requires_grad = False
-        for param in self.models["depth"].parameters():
+        for param in self.models["depth_model"].parameters():
             param.requires_grad = False
         for param in self.models["pose_encoder"].parameters():
             param.requires_grad = False
@@ -215,8 +210,7 @@ class Trainer:
         self.models["position_encoder"].train()
         self.models["position"].train()
 
-        self.models["encoder"].eval()
-        self.models["depth"].eval()
+        self.models["depth_model"].eval()
         self.models["pose_encoder"].eval()
         self.models["pose"].eval()
         self.models["transform_encoder"].eval()
@@ -230,9 +224,9 @@ class Trainer:
         for param in self.models["position"].parameters():
             param.requires_grad = False
 
-        for param in self.models["encoder"].parameters():
-            param.requires_grad = True
-        for param in self.models["depth"].parameters():
+        # for param in self.models["encoder"].parameters():
+            # param.requires_grad = True
+        for param in self.models["depth_model"].parameters():
             param.requires_grad = True
         for param in self.models["pose_encoder"].parameters():
             param.requires_grad = True
@@ -246,8 +240,7 @@ class Trainer:
         self.models["position_encoder"].eval()
         self.models["position"].eval()
 
-        self.models["encoder"].train()
-        self.models["depth"].train()
+        self.models["depth_model"].train()
         self.models["pose_encoder"].train()
         self.models["pose"].train()
         self.models["transform_encoder"].train()
@@ -256,8 +249,7 @@ class Trainer:
     def set_eval(self):
         """Convert all models to testing/evaluation mode
         """
-        self.models["encoder"].eval()
-        self.models["depth"].eval()
+        self.models["depth_model"].eval()
         self.models["transform_encoder"].eval()
         self.models["transform"].eval()
         self.models["pose_encoder"].eval()
@@ -419,44 +411,22 @@ class Trainer:
         """
         for key, ipt in inputs.items():
             inputs[key] = ipt.to(self.device)
-
-        if self.opt.pose_model_type == "shared":
-            # If we are using a shared encoder for both depth and pose (as advocated
-            # in monodepthv1), then all images are fed separately through the depth encoder.
-            all_color_aug = torch.cat([inputs[("color_aug", i, 0)] for i in self.opt.frame_ids])
-            all_features = self.models["encoder"](all_color_aug)
-            all_features = [torch.split(f, self.opt.batch_size) for f in all_features]
-
-            features = {}
-            for i, k in enumerate(self.opt.frame_ids):
-                features[k] = [f[i] for f in all_features]
-
-            outputs = self.models["depth"](features[0])
-        else:
-            # Otherwise, we only feed the image with frame_id 0 through the depth encoder
-            features = self.models["encoder"](inputs["color_aug", 0, 0])
-            outputs = self.models["depth"](features)
-
-        if self.opt.predictive_mask:
-            outputs["predictive_mask"] = self.models["predictive_mask"](features)
+        outputs = self.models["depth_model"](inputs["color_aug", 0, 0])
 
         if self.use_pose_net:
-            outputs.update(self.predict_poses(inputs, features, outputs))
+            outputs.update(self.predict_poses(inputs, outputs))
 
         self.generate_images_pred(inputs, outputs)
         losses = self.compute_losses(inputs, outputs)
 
         return outputs, losses
 
-    def predict_poses(self, inputs, features, disps):
+    def predict_poses(self, inputs, disps):
         """Predict poses between input frames for monocular sequences.
         """
         outputs = {}
         if self.num_pose_frames == 2:
-            if self.opt.pose_model_type == "shared":
-                pose_feats = {f_i: features[f_i] for f_i in self.opt.frame_ids}
-            else:
-                pose_feats = {f_i: inputs["color_aug", f_i, 0] for f_i in self.opt.frame_ids}
+            pose_feats = {f_i: inputs["color_aug", f_i, 0] for f_i in self.opt.frame_ids}
                 
             for f_i in self.opt.frame_ids[1:]:
 
