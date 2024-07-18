@@ -76,7 +76,7 @@ class Trainer:
         if self.use_pose_net:
 
             if self.opt.pose_model_type == "separate_resnet":
-                pose_encoder_path = os.path.join("../../weights/Model_MIA/models/weights_9", "pose_encoder.pth")
+                pose_encoder_path = os.path.join("../../weights/Model_MIA", "pose_encoder.pth")
                 pose_decoder_path = os.path.join("../../weights/Model_MIA", "pose.pth")
                 self.models["pose_encoder"] = networks.ResnetEncoder(
                     self.opt.num_layers,
