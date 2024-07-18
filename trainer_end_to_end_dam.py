@@ -49,31 +49,40 @@ class Trainer:
 
         self.models["position_encoder"] = networks.ResnetEncoder(
             self.opt.num_layers, self.opt.weights_init == "pretrained", num_input_images=2)  # 18
+        
+        self.models["position_encoder"].load_state_dict(torch.load("../../weights/Model_MIA/position_encoder.pth"))
         self.models["position_encoder"].to(self.device)
         self.parameters_to_train_0 += list(self.models["position_encoder"].parameters())
 
         self.models["position"] = networks.PositionDecoder(
             self.models["position_encoder"].num_ch_enc, self.opt.scales)
+        self.models["position"].load_state_dict(torch.load("../../weights/Model_MIA/position.pth"))
+        
         self.models["position"].to(self.device)
         self.parameters_to_train_0 += list(self.models["position"].parameters())
 
         self.models["transform_encoder"] = networks.ResnetEncoder(
             self.opt.num_layers, self.opt.weights_init == "pretrained", num_input_images=2)  # 18
+        self.models["transform_encoder"].load_state_dict(torch.load("../../weights/Model_MIA/transform_encoder.pth"))
         self.models["transform_encoder"].to(self.device)
         self.parameters_to_train += list(self.models["transform_encoder"].parameters())
 
         self.models["transform"] = networks.TransformDecoder(
             self.models["transform_encoder"].num_ch_enc, self.opt.scales)
+        self.models["transform"].load_state_dict(torch.load("../../weights/Model_MIA/transform.pth"))
         self.models["transform"].to(self.device)
         self.parameters_to_train += list(self.models["transform"].parameters())
 
         if self.use_pose_net:
 
             if self.opt.pose_model_type == "separate_resnet":
+                pose_encoder_path = os.path.join("../../weights/Model_MIA/models/weights_9", "pose_encoder.pth")
+                pose_decoder_path = os.path.join("../../weights/Model_MIA", "pose.pth")
                 self.models["pose_encoder"] = networks.ResnetEncoder(
                     self.opt.num_layers,
                     self.opt.weights_init == "pretrained",
                     num_input_images=self.num_pose_frames)
+                self.models["pose_encoder"].load_state_dict(torch.load(pose_encoder_path))
                 self.models["pose_encoder"].to(self.device)
                 self.parameters_to_train += list(self.models["pose_encoder"].parameters())
 
@@ -81,14 +90,17 @@ class Trainer:
                     self.models["pose_encoder"].num_ch_enc,
                     num_input_features=1,
                     num_frames_to_predict_for=2)
-
+                
+                self.models["pose"].load_state_dict(torch.load(pose_decoder_path))
             elif self.opt.pose_model_type == "shared":
                 self.models["pose"] = networks.PoseDecoder(
                     self.models["encoder"].num_ch_enc, self.num_pose_frames)
+                self.models["pose"].load_state_dict(torch.load(pose_decoder_path))
 
             elif self.opt.pose_model_type == "posecnn":
                 self.models["pose"] = networks.PoseCNN(
                     self.num_input_frames if self.opt.pose_model_input == "all" else 2)
+                self.models["pose"].load_state_dict(torch.load(pose_decoder_path))
 
             self.models["pose"].to(self.device)
             self.parameters_to_train += list(self.models["pose"].parameters())
@@ -99,11 +111,14 @@ class Trainer:
 
             # Our implementation of the predictive masking baseline has the the same architecture
             # as our depth decoder. We predict a separate mask for each source frame.
+            print('CHECK: self.opt.predictive_mask')
             self.models["predictive_mask"] = networks.DepthDecoder(
                 self.models["encoder"].num_ch_enc, self.opt.scales,
                 num_output_channels=(len(self.opt.frame_ids) - 1))
             self.models["predictive_mask"].to(self.device)
             self.parameters_to_train += list(self.models["predictive_mask"].parameters())
+        else:
+            print('CHECK: NO self.opt.predictive_mask')
 
         self.model_optimizer = optim.Adam(self.parameters_to_train, self.opt.learning_rate)
         self.model_lr_scheduler = optim.lr_scheduler.StepLR(
