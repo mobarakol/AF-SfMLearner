@@ -165,8 +165,10 @@ class Trainer:
             self.writers[mode] = SummaryWriter(os.path.join(self.log_path, mode))
 
         if not self.opt.no_ssim:
-            self.ssim = SSIM()
-            self.ssim.to(self.device)
+            #self.ssim = SSIM()
+            #self.ssim.to(self.device)
+            self.ms_ssim = MultiScaleStructuralSimilarityIndexMeasure(data_range=1.0)
+            self.ms_ssim.to(self.device)
 
         self.spatial_transform = SpatialTransformer((self.opt.height, self.opt.width))
         self.spatial_transform.to(self.device)
@@ -549,16 +551,30 @@ class Trainer:
                 outputs[("position_depth", scale, frame_id)] = self.position_depth[source_scale](
                         cam_points, inputs[("K", source_scale)], T)
 
+    # def compute_reprojection_loss(self, pred, target):
+
+    #     abs_diff = torch.abs(target - pred)
+    #     l1_loss = abs_diff.mean(1, True)
+
+    #     if self.opt.no_ssim:
+    #         reprojection_loss = l1_loss
+    #     else:
+    #         ssim_loss = self.ssim(pred, target).mean(1, True)
+    #         reprojection_loss = 0.85 * ssim_loss + 0.15 * l1_loss
+
+    #     return reprojection_loss
+
     def compute_reprojection_loss(self, pred, target):
 
-        abs_diff = torch.abs(target - pred)
-        l1_loss = abs_diff.mean(1, True)
+        smooth_l1 = nn.SmoothL1Loss(beta=1.0)
+        smooth_l1_loss = smooth_l1(pred,target)
 
         if self.opt.no_ssim:
-            reprojection_loss = l1_loss
+            reprojection_loss = smooth_l1_loss
         else:
-            ssim_loss = self.ssim(pred, target).mean(1, True)
-            reprojection_loss = 0.85 * ssim_loss + 0.15 * l1_loss
+            ms_ssim_loss = 1 - self.ms_ssim(pred, target)
+            # reprojection_loss = 0.85 * ms_ssim_loss + 0.15 * smooth_l1_loss
+            reprojection_loss = 0.9 * ms_ssim_loss + 0.1 * smooth_l1_loss
 
         return reprojection_loss
 

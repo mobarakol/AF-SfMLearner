@@ -84,6 +84,7 @@ class LoRAInitializer:
     def initialize_lora(self):
         for param in self.model.backbone.parameters():
             param.requires_grad = False
+            #param.requires_grad = True
 
         for t_layer_i, blk in enumerate(self.model.backbone.encoder.layer):
             dim = blk.attention.attention.query.in_features
