@@ -110,8 +110,9 @@ def evaluate(opt):
 
         # encoder = networks.ResnetEncoder(opt.num_layers, False)
         # depth_decoder = networks.DepthDecoder(encoder.num_ch_enc, scales=range(4))
-        #depth_model = networks.Customised_DAM()
-        depth_model = DepthAnythingForDepthEstimation.from_pretrained("LiheYoung/depth-anything-small-hf")
+        #depth_model = networks.Customised_DAM() 
+        # depth_model = DepthAnythingForDepthEstimation.from_pretrained("LiheYoung/depth-anything-small-hf") 
+        depth_model = DepthAnythingForDepthEstimation.from_pretrained(opt.dam_hf_weights)
         #model_dict = encoder.state_dict()
         #encoder.load_state_dict({k: v for k, v in encoder_dict.items() if k in model_dict})
         #depth_decoder.load_state_dict(torch.load(decoder_path, map_location=device.type))
