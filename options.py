@@ -233,6 +233,9 @@ class MonodepthOptions:
         self.parser.add_argument("--zero_shot",
                                  help="if set saves reconstruction files",
                                  action="store_true")
+        self.parser.add_argument("--dam_hf_weights",
+                                 help="DAM huggingface weights name",
+                                 type=str)
         
 
     def parse(self):
