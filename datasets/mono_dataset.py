@@ -153,12 +153,15 @@ class MonoDataset(data.Dataset):
             side = None
             
         inputs["frame_id"] = torch.from_numpy(np.array(frame_index))
-        for i in self.frame_idxs:
+        for idx, i in enumerate(self.frame_idxs):
             if i == "s":
                 other_side = {"r": "l", "l": "r"}[side]
                 inputs[("color", i, -1)] = self.get_color(folder, frame_index, other_side, do_flip)
             else:
                 inputs[("color", i, -1)] = self.get_color(folder, frame_index + i, side, do_flip)
+                
+            if idx == 0:
+                inputs['path'] = color_path
 
         # adjusting intrinsics to match each scale in the pyramid
         for scale in range(self.num_scales):
