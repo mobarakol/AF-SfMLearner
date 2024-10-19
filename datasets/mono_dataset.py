@@ -161,7 +161,7 @@ class MonoDataset(data.Dataset):
                 inputs[("color", i, -1)] = self.get_color(folder, frame_index + i, side, do_flip)
                 
             if idx == 0:
-                color_path = os.path.join(self.data_path, folder, "{:04d}_color.png".format(frame_index + i))
+                color_path = self.get_image_path(folder, frame_index + i, side)
                 inputs['path'] = color_path
 
         # adjusting intrinsics to match each scale in the pyramid
