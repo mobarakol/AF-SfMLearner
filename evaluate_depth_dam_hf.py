@@ -113,6 +113,7 @@ def evaluate(opt):
         #depth_model = networks.Customised_DAM() 
         # depth_model = DepthAnythingForDepthEstimation.from_pretrained("LiheYoung/depth-anything-small-hf") 
         depth_model = DepthAnythingForDepthEstimation.from_pretrained(opt.dam_hf_weights)
+        # image_processor = AutoImageProcessor.from_pretrained(opt.dam_hf_weights)
         #model_dict = encoder.state_dict()
         #encoder.load_state_dict({k: v for k, v in encoder_dict.items() if k in model_dict})
         #depth_decoder.load_state_dict(torch.load(decoder_path, map_location=device.type))
@@ -143,6 +144,7 @@ def evaluate(opt):
                     input_color = torch.cat((input_color, torch.flip(input_color, [3])), 0)
 
                 #output = depth_decoder(encoder(input_color))
+                # input_color = image_processor(images=input_color, return_tensors="pt", do_rescale=False)['pixel_values'].to(device)
                 output = depth_model(input_color)
                 output = output.predicted_depth.unsqueeze(1)
                 output = nn.Sigmoid()(output)
