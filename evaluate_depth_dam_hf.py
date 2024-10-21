@@ -145,6 +145,7 @@ def evaluate(opt):
 
                 #output = depth_decoder(encoder(input_color))
                 # input_color = image_processor(images=input_color, return_tensors="pt", do_rescale=False)['pixel_values'].to(device)
+                # input_color = image_processor(images=input_color, return_tensors="pt", do_rescale=False, do_resize=False)['pixel_values'].to(device)
                 output = depth_model(input_color)
                 output = output.predicted_depth.unsqueeze(1)
                 output = nn.Sigmoid()(output)
